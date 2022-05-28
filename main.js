@@ -1,7 +1,7 @@
-// Hello future me, error throwing. Goodbye
-const { readFile } = require('node:fs');
+const fs = require('fs');
 var past = "";
 var line = 0
+var tape = []
 
 function parse(code){
     var args = code.split(" ");
@@ -26,6 +26,12 @@ function parse(code){
         got: (args) => {
             args = args.slice(1);
             line = parseInt(args[0]) - 2;
+        },
+        tse: (args) => {
+            args = args.slice(1);
+            final = args.slice(1);
+            //TODO: handle error if no args in "final"
+            tape[parseInt(args[0])] = final.join(" ").replace("${x}", past);
         }
     };
     var macros = {
@@ -43,9 +49,12 @@ function parse(code){
         },
         cmp: (args) => {
             return (args[1] == args[2] ? 1 : 0)
+        },
+        tge: (args) => {
+            return tape[parseInt(args[1])]
         }
     };
-    var command = args[0];
+    var command = args[0].toLowerCase();
     if (!command.startsWith("--")){
         commands[command](args, past)
     } else {
@@ -54,7 +63,7 @@ function parse(code){
     }
 }
 
-readFile('main.mt','utf8', function(err, data){
+fs.readFile('main.mt','utf8', function(err, data){
     if (!err){
         let lines = data.split("\n");
         for (line = 0; line < lines.length; line++){
