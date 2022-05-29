@@ -30,7 +30,6 @@ function parse(code){
         tse: (args) => {
             args = args.slice(1);
             final = args.slice(1);
-            //TODO: handle error if no args in "final"
             tape[parseInt(args[0])] = final.join(" ").replace("${x}", past);
         }
     };
@@ -67,8 +66,15 @@ fs.readFile('main.mt','utf8', function(err, data){
     if (!err){
         let lines = data.split("\n");
         for (line = 0; line < lines.length; line++){
-            parse(lines[line], past);
+            try{
+                parse(lines[line], past)
+            }
+            catch(e){
+                if (e instanceof TypeError) {
+                    console.log(`Undercooked: Failure to run command at line ${line + 1} -> ${lines[line]}`)
+                } else {throw(e)}
+            }
         }
-    } else {throw err}
+    } else {throw(err)}
     // console.log(err||lines[1]);
 })
