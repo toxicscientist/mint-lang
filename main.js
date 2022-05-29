@@ -3,6 +3,25 @@ var past = "";
 var line = 0
 var tape = []
 
+function log(message, color, effect){
+    let colors = {
+        undercooked: "\x1b[1;33m",
+        overcooked: "\x1b[31m",
+        none: "\x1b[0m"
+    };
+    let effects = {
+        highlight: "\x1b[7m",
+        underline: "\x1b[4m",
+        none: "\x1b[2m",
+    };
+    console.log(
+        colors[color] +
+        effects[effect] +
+        message +
+        "\033[0m"
+    );
+}
+
 function parse(code){
     var args = code.split(" ");
     var commands = {
@@ -71,7 +90,7 @@ fs.readFile('main.mt','utf8', function(err, data){
             }
             catch(e){
                 if (e instanceof TypeError) {
-                    console.log(`Undercooked: Failure to run command at line ${line + 1} -> ${lines[line]}`)
+                    log("Undercooked: Failure to run command at line" + (line + 1) + " -> " + lines[line], "undercooked", "underline")
                 } else {throw(e)}
             }
         }
