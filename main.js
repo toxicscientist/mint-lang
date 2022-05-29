@@ -1,9 +1,12 @@
 const fs = require('fs');
+const os = require("os");
 var past = "";
 var line = 0
 var tape = []
 
-function log(message, color, effect){
+
+
+function log(message="Well Done", color="none", effect="none"){
     let colors = {
         undercooked: "\x1b[1;33m",
         overcooked: "\x1b[31m",
@@ -22,15 +25,19 @@ function log(message, color, effect){
     );
 }
 
+function forceClose(){
+    log("Process gracefully shut down", "overcooked", "highlight")
+    process.kill(process.pid, "SIGTERM");
+}
+
 function parse(code) {
     var args = code.split(" ");
     var commands = {
         prn: (args, past) => {
             args = args.slice(1);
-            if(args.join(" ").includes("${x}") && !past){
+            if (args.join(" ").includes("${x}") && !past) {
                 log(
-                    "Undercooked: ${x} is undefined at line " +
-                        (line + 1),
+                    "Undercooked: ${x} is undefined at line " + (line + 1),
                     "undercooked",
                     "underline"
                 );
@@ -57,15 +64,27 @@ function parse(code) {
             line = parseInt(args[0]) - 2;
             if (line < 0) {
                 log(
-                    "Undercooked: Goto leads to out of bounds location! Tries to go to line " + (line + 2), "undercooked", "underline");
+                    "Undercooked: Goto leads to out of bounds location! Tries to go to line " +
+                        (line + 2),
+                    "undercooked",
+                    "underline"
+                );
                 line = origin;
+            } else if ((line = origin - 1)) {
+                log(
+                    "Overcooked: Goto leads to self(INFINITE LOOP)! Tries to go to line " +
+                        (line + 2),
+                    "overcooked",
+                    "underline"
+                );
+                forceClose();
             }
         },
         tse: (args) => {
             args = args.slice(1);
             final = args.slice(1);
             tape[parseInt(args[0])] = final.join(" ").replace("${x}", past);
-        },
+        }
     };
     var macros = {
         add: (args) => {
@@ -110,17 +129,16 @@ function parse(code) {
 
 fs.readFile('main.mt','utf8', function(err, data){
     if (!err){
-        let lines = data.split("\n");
+        let lines = data.split(os.EOL);
         for (line = 0; line < lines.length; line++){
             try{
                 parse(lines[line], past)
             }
             catch(e){
                 if (e instanceof TypeError) {
-                    log("Undercooked: Failure to run command at line " + (line + 1) + " -> " + lines[line], "undercooked", "underline")
+                    log("Undercooked: Unrecognized command at line " + (line + 1) + " -> " + lines[line], "undercooked", "underline")
                 } else {throw(e)}
             }
         }
     } else {throw(err)}
-    // console.log(err||lines[1]);
 })
